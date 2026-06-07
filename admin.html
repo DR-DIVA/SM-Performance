@@ -350,7 +350,7 @@
     // Load existing data
     async function loadData() {
         try {
-            const res = await fetch('http://localhost:3000/api/data');
+            const res = await fetch('/api/data');
             const memory = await res.json();
             if(memory) {
                 const inputs = document.querySelectorAll('input');
@@ -433,7 +433,7 @@
         btn.innerHTML = '🔄 Saving...';
 
         try {
-            await fetch('http://localhost:3000/api/data', {
+            await fetch('/api/data', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
