@@ -414,9 +414,6 @@
                 document.getElementById('status-fb').innerText = 'DONE';
                 
                 fbDropZone.style.background = 'rgba(34, 197, 94, 0.1)';
-                
-                const msg = document.getElementById('fb-success-msg');
-                if(msg) msg.remove();
             };
             reader.readAsDataURL(file);
         } else if (file.name.endsWith('.csv') || file.type === 'text/csv') {
@@ -485,7 +482,6 @@
         checkStatuses();
 
         fbDropZone.style.background = 'rgba(34, 197, 94, 0.1)';
-        fbPreviewImg.style.display = 'none';
         
         let successMsg = document.getElementById('fb-success-msg');
         if(!successMsg) {
