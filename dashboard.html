@@ -738,10 +738,11 @@
                     rVal.style.color = roiColor;
                     rVal.textContent = roi.toFixed(1) + '%';
                 }
-            } catch (err) {
-                console.error("Dashboard error:", err);
             }
+        } catch (err) {
+            console.error("Dashboard error:", err);
         }
+    }
 
         // Run on load
         window.addEventListener('load', loadDashboardData);
