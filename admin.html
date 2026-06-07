@@ -489,6 +489,8 @@
     function processRows(rows) {
         let inboundCount = 0;
         let qualifiedCount = 0;
+        let minDate = null;
+        let maxDate = null;
 
         const positiveKeywords = [
             'lead',
@@ -505,6 +507,16 @@
             if(Object.keys(row).length === 0) return;
             
             inboundCount++;
+
+            // Extract Date
+            const dateStr = row['last_contact_date'] || row['created_at'];
+            if (dateStr) {
+                const date = new Date(dateStr);
+                if (!isNaN(date)) {
+                    if (!minDate || date < minDate) minDate = date;
+                    if (!maxDate || date > maxDate) maxDate = date;
+                }
+            }
 
             const tags = row['tags'] ? String(row['tags']).toLowerCase() : '';
             
@@ -527,11 +539,18 @@
         
         checkStatuses(); // Refresh badges
 
+        let dateRangeText = "";
+        if (minDate && maxDate) {
+            const formatDate = (d) => d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
+            dateRangeText = `<div style="font-size: 11px; color: var(--l2-color); margin-top: 5px; font-weight: bold;">📅 ข้อมูลวันที่: ${formatDate(minDate)} - ${formatDate(maxDate)}</div>`;
+        }
+
         // Reset drop zone UI
         ohoDropZone.style.background = 'rgba(0,0,0,0.2)';
         ohoDropZone.innerHTML = `
             <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--success);">✅ ดึงข้อมูลสำเร็จ!</div>
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Inbound: ${inboundCount} | Qualified: ${qualifiedCount}</div>
+            ${dateRangeText}
             <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; cursor: pointer;" onclick="document.getElementById('ohochat-file').click()">คลิกเพื่อเปลี่ยนไฟล์อัปโหลด</div>
         `;
     }
