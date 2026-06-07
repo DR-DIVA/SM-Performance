@@ -244,10 +244,11 @@
                 </div>
             </div>
             
-            <div class="drop-zone" style="padding: 10px;">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">📊 Drop FB CSV/Image here</div>
-                <img src="assets/fb-sample.png" alt="FB Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">ภาพตัวอย่างที่เคยดึงข้อมูล</div>
+            <div class="drop-zone" id="fb-drop" style="padding: 10px;" onclick="document.getElementById('fb-file').click()">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">📊 Drop FB Image here</div>
+                <img id="fb-preview-img" src="assets/fb-sample.png" alt="FB Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2); object-fit: contain;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">คลิกเพื่ออัปโหลด หรือลากรูปมาวางเพื่อดูเทียบ</div>
+                <input type="file" id="fb-file" accept="image/*" style="display: none;">
             </div>
 
             <div class="form-group">
@@ -383,7 +384,6 @@
 
         const badge = document.getElementById(statusId);
         const dateEl = document.getElementById(dateId);
-        // Note: Logic for date tracking would need integration with fetch data or a persistent store
         
         if(isDone) {
             badge.textContent = 'DONE';
@@ -395,6 +395,57 @@
             dateEl.style.display = 'none';
         }
     }
+
+    // --- FB Image Preview Logic ---
+    const fbDropZone = document.getElementById('fb-drop');
+    const fbFileInput = document.getElementById('fb-file');
+    const fbPreviewImg = document.getElementById('fb-preview-img');
+
+    function processFBImage(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('กรุณาอัปโหลดไฟล์รูปภาพเท่านั้นครับ');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            fbPreviewImg.src = e.target.result;
+            fbPreviewImg.style.maxHeight = '150px'; // slightly bigger when active
+            fbPreviewImg.style.opacity = '1';
+            
+            document.getElementById('status-fb').className = 'status-badge status-done';
+            document.getElementById('status-fb').innerText = 'DONE';
+            
+            fbDropZone.style.background = 'rgba(34, 197, 94, 0.1)';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Handle File Select (Click) for FB
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'fb-file') {
+            if (e.target.files.length > 0) {
+                processFBImage(e.target.files[0]);
+            }
+        }
+    });
+
+    // Handle Drag & Drop for FB
+    fbDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fbDropZone.style.borderColor = 'var(--primary-color)';
+    });
+    fbDropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        fbDropZone.style.borderColor = 'rgba(255,255,255,0.2)';
+    });
+    fbDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fbDropZone.style.borderColor = 'rgba(255,255,255,0.2)';
+        if (e.dataTransfer.files.length > 0) {
+            processFBImage(e.dataTransfer.files[0]);
+        }
+    });
 
     function checkStatuses() {
         updateSectionStatus(inputsFb, 'status-fb', 'date-fb');
