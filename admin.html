@@ -212,6 +212,8 @@
             bottom: 40px;
         }
     </style>
+    <!-- PapaParse for CSV reading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
@@ -274,10 +276,11 @@
                 </div>
             </div>
             
-            <div class="drop-zone" style="padding: 10px;">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">💬 Drop Chat Export here</div>
+            <div class="drop-zone" id="ohochat-drop" style="padding: 10px;" onclick="document.getElementById('ohochat-file').click()">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">💬 Drop OhoChat CSV here (or Click)</div>
                 <img src="assets/chat-sample.png" alt="Chat Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">ไฟล์: บริษัท คอสเมดิวา จำกัด_รายชื่อลูกค้า_ข้อมูลทั่วไป.xlsx</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">รองรับไฟล์: .csv (รายชื่อลูกค้า)</div>
+                <input type="file" id="ohochat-file" accept=".csv" style="display: none;">
             </div>
 
             <div class="form-group">
@@ -466,6 +469,80 @@
 
     // Init
     loadData();
+
+    // --- OhoChat CSV Parsing Logic ---
+    const ohoDropZone = document.getElementById('ohochat-drop');
+    const ohoFileInput = document.getElementById('ohochat-file');
+
+    function processOhoChatCSV(file) {
+        ohoDropZone.style.background = 'rgba(34, 197, 94, 0.2)'; // green highlight
+        ohoDropZone.innerHTML = '<div style="padding: 20px;">⏳ กำลังคำนวณข้อมูล...</div>';
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                const rows = results.data;
+                let inboundCount = 0;
+                let qualifiedCount = 0;
+
+                rows.forEach(row => {
+                    inboundCount++; // Count every row as an inbound chat
+
+                    // Check tags for "LEAD" or "ได้ contact" to count as qualified
+                    const tags = row['tags'] ? row['tags'].toLowerCase() : '';
+                    if (tags.includes('lead') || tags.includes('ได้ contact') || tags.includes('โต้ตอบ')) {
+                        // You can adjust this logic based on exact tags needed
+                        if(tags.includes('lead') || tags.includes('ได้ contact')) {
+                            qualifiedCount++;
+                        }
+                    }
+                });
+
+                // Update UI inputs
+                document.getElementById('chat-inbound').value = inboundCount;
+                document.getElementById('chat-qualified').value = qualifiedCount;
+                
+                checkStatuses(); // Refresh badges
+
+                // Reset drop zone UI
+                ohoDropZone.style.background = 'rgba(0,0,0,0.2)';
+                ohoDropZone.innerHTML = `
+                    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--success);">✅ ดึงข้อมูลสำเร็จ!</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Inbound: ${inboundCount} | Qualified: ${qualifiedCount}</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; cursor: pointer;" onclick="document.getElementById('ohochat-file').click()">คลิกเพื่อเปลี่ยนไฟล์อัปโหลด</div>
+                `;
+            },
+            error: function(err) {
+                alert('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV');
+                console.error(err);
+            }
+        });
+    }
+
+    // Handle File Select (Click)
+    ohoFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            processOhoChatCSV(e.target.files[0]);
+        }
+    });
+
+    // Handle Drag & Drop
+    ohoDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        ohoDropZone.style.borderColor = 'var(--l2-color)';
+    });
+    ohoDropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        ohoDropZone.style.borderColor = 'rgba(255,255,255,0.2)';
+    });
+    ohoDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        ohoDropZone.style.borderColor = 'rgba(255,255,255,0.2)';
+        if (e.dataTransfer.files.length > 0) {
+            processOhoChatCSV(e.dataTransfer.files[0]);
+        }
+    });
 </script>
 
 </body>
