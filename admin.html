@@ -245,10 +245,10 @@
             </div>
             
             <div class="drop-zone" id="fb-drop" style="padding: 10px;">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">📊 Drop FB Image here</div>
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">📊 Drop FB Image / CSV here</div>
                 <img id="fb-preview-img" src="assets/fb-sample.png" alt="FB Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2); object-fit: contain; cursor: zoom-in;" onclick="document.getElementById('modal-img').src=this.src; document.getElementById('image-modal').style.display='flex';">
                 <div style="font-size: 11px; color: var(--l2-color); margin-top: 5px; cursor: pointer; text-decoration: underline;" onclick="document.getElementById('fb-file').click()">คลิกอัปโหลด หรือ กด Ctrl+V เพื่อวางรูป</div>
-                <input type="file" id="fb-file" accept="image/*" style="display: none;">
+                <input type="file" id="fb-file" accept="image/*, .csv, .xlsx, .xls" style="display: none;">
             </div>
 
             <div class="form-group">
@@ -396,36 +396,112 @@
         }
     }
 
-    // --- FB Image Preview Logic ---
+    // --- FB File/Image Logic ---
     const fbDropZone = document.getElementById('fb-drop');
     const fbFileInput = document.getElementById('fb-file');
     const fbPreviewImg = document.getElementById('fb-preview-img');
 
-    function processFBImage(file) {
-        if (!file.type.startsWith('image/')) {
-            alert('กรุณาอัปโหลดไฟล์รูปภาพเท่านั้นครับ');
-            return;
+    function processFBFile(file) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                fbPreviewImg.src = e.target.result;
+                fbPreviewImg.style.maxHeight = '150px';
+                fbPreviewImg.style.display = 'inline-block';
+                fbPreviewImg.style.opacity = '1';
+                
+                document.getElementById('status-fb').className = 'status-badge status-done';
+                document.getElementById('status-fb').innerText = 'DONE';
+                
+                fbDropZone.style.background = 'rgba(34, 197, 94, 0.1)';
+                
+                const msg = document.getElementById('fb-success-msg');
+                if(msg) msg.remove();
+            };
+            reader.readAsDataURL(file);
+        } else if (file.name.endsWith('.csv') || file.type === 'text/csv') {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processFBCSV(results.data);
+                }
+            });
+        } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, {defval: 0});
+                    processFBCSV(jsonRows);
+                } catch(err) {
+                    console.error("Error reading Excel:", err);
+                    alert("ไม่สามารถอ่านไฟล์ Excel ได้ครับ กรุณาลองใหม่");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            alert('กรุณาอัปโหลดไฟล์รูปภาพ, CSV หรือ Excel เท่านั้นครับ');
         }
+    }
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            fbPreviewImg.src = e.target.result;
-            fbPreviewImg.style.maxHeight = '150px'; // slightly bigger when active
-            fbPreviewImg.style.opacity = '1';
-            
-            document.getElementById('status-fb').className = 'status-badge status-done';
-            document.getElementById('status-fb').innerText = 'DONE';
-            
-            fbDropZone.style.background = 'rgba(34, 197, 94, 0.1)';
-        };
-        reader.readAsDataURL(file);
+    function processFBCSV(rows) {
+        let sumImpression = 0;
+        let sumAudience = 0;
+        let sumViews = 0;
+        
+        let sumInteract = 0;
+        let sumFeelings = 0;
+        let sumShares = 0;
+
+        rows.forEach(row => {
+            const keys = Object.keys(row);
+            const getVal = (keyword) => {
+                const matchedKey = keys.find(k => String(k).includes(keyword));
+                if (matchedKey && row[matchedKey] !== '' && !isNaN(row[matchedKey])) {
+                    return parseFloat(row[matchedKey]);
+                }
+                return 0;
+            };
+
+            sumImpression += getVal('อิมเพรสชั่น');
+            sumAudience += getVal('ผู้ชม');
+            sumViews += getVal('ยอดดู');
+
+            sumInteract += getVal('การโต้ตอบ');
+            sumFeelings += getVal('ความรู้สึก');
+            sumShares += getVal('การแชร์');
+        });
+
+        const finalReach = Math.max(sumImpression, sumAudience, sumViews);
+        const finalEngage = Math.max(sumInteract, sumFeelings, sumShares);
+
+        document.getElementById('fb-reach').value = finalReach;
+        document.getElementById('fb-engage').value = finalEngage;
+        
+        checkStatuses();
+
+        fbDropZone.style.background = 'rgba(34, 197, 94, 0.1)';
+        fbPreviewImg.style.display = 'none';
+        
+        let successMsg = document.getElementById('fb-success-msg');
+        if(!successMsg) {
+            successMsg = document.createElement('div');
+            successMsg.id = 'fb-success-msg';
+            successMsg.style.cssText = 'font-size: 13px; font-weight: bold; color: var(--success); margin-top: 10px;';
+            fbDropZone.appendChild(successMsg);
+        }
+        successMsg.innerHTML = `✅ ดึงข้อมูลสำเร็จ!<br><span style="font-size:11px; color:var(--text-muted); font-weight:normal;">Reach: ${finalReach.toLocaleString()} | Engage: ${finalEngage.toLocaleString()}</span>`;
     }
 
     // Handle File Select (Click) for FB
     document.addEventListener('change', (e) => {
         if (e.target && e.target.id === 'fb-file') {
             if (e.target.files.length > 0) {
-                processFBImage(e.target.files[0]);
+                processFBFile(e.target.files[0]);
             }
         }
     });
@@ -443,7 +519,7 @@
         e.preventDefault();
         fbDropZone.style.borderColor = 'rgba(255,255,255,0.2)';
         if (e.dataTransfer.files.length > 0) {
-            processFBImage(e.dataTransfer.files[0]);
+            processFBFile(e.dataTransfer.files[0]);
         }
     });
 
@@ -455,7 +531,7 @@
             if (item.kind === 'file') {
                 const blob = item.getAsFile();
                 if (blob && blob.type.startsWith('image/')) {
-                    processFBImage(blob);
+                    processFBFile(blob);
                 }
             }
         }
