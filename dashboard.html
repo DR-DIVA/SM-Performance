@@ -615,12 +615,24 @@
 
         // Data processing logic
         function formatMoney(num) {
+            if (num === null || isNaN(num) || !isFinite(num)) return 'N/A';
             return '฿' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         
         function formatK(num) {
+            if (num === null || isNaN(num) || !isFinite(num)) return 'N/A';
             if(num >= 1000) return (num/1000).toFixed(1) + 'k';
             return num;
+        }
+
+        function formatNum(num) {
+            if (num === null || isNaN(num) || !isFinite(num)) return 'N/A';
+            return num.toLocaleString();
+        }
+
+        function formatPct(num) {
+            if (num === null || isNaN(num) || !isFinite(num)) return 'N/A';
+            return num.toFixed(1) + '%';
         }
 
         function setKPI(boxId, valueStr, formulaStr) {
@@ -628,8 +640,8 @@
             if(box) {
                 const valEl = box.querySelector('.kpi-val');
                 const formEl = box.querySelector('.kpi-formula');
-                if(valEl && valueStr) valEl.innerHTML = valueStr;
-                if(formEl && formulaStr) formEl.innerHTML = formulaStr;
+                if(valEl && valueStr !== undefined) valEl.innerHTML = valueStr;
+                if(formEl && formulaStr !== undefined) formEl.innerHTML = formulaStr;
             }
         }
 
@@ -640,7 +652,10 @@
                 
                 if (!memory) return; // No data yet, use html defaults
 
-                const getVal = (key, defaultVal) => memory[key] !== undefined && memory[key] !== null ? memory[key] : defaultVal;
+                const getVal = (key, defaultVal) => {
+                    if (!memory.hasOwnProperty(key)) return defaultVal;
+                    return memory[key]; // Returns null if it was saved as empty
+                };
 
             // Header Timestamp
             if(memory['last_updated']) {
@@ -654,50 +669,58 @@
             const message = getVal('fb-message', 293);
 
             document.getElementById('val-ad-spend').textContent = formatMoney(spend);
-            document.getElementById('val-reach').textContent = reach.toLocaleString();
-            document.getElementById('val-engage').textContent = engage.toLocaleString();
-            document.getElementById('val-message').textContent = message.toLocaleString();
+            document.getElementById('val-reach').textContent = formatNum(reach);
+            document.getElementById('val-engage').textContent = formatNum(engage);
+            document.getElementById('val-message').textContent = formatNum(message);
 
             // Allocation Split (17.11%, 17.42%, 65.46%)
-            const spendReach = spend * 0.171118;
-            const spendEngage = spend * 0.174237;
-            const spendMessage = spend * 0.654645;
+            const spendReach = spend !== null ? spend * 0.171118 : null;
+            const spendEngage = spend !== null ? spend * 0.174237 : null;
+            const spendMessage = spend !== null ? spend * 0.654645 : null;
             
             document.getElementById('val-spend-reach').textContent = formatMoney(spendReach);
             document.getElementById('val-spend-engage').textContent = formatMoney(spendEngage);
             document.getElementById('val-spend-message').textContent = formatMoney(spendMessage);
 
-            const costReach = spendReach / reach;
-            const costEngage = spendEngage / engage;
-            const costMessage = spendMessage / message;
+            const costReach = spendReach !== null && reach ? spendReach / reach : null;
+            const costEngage = spendEngage !== null && engage ? spendEngage / engage : null;
+            const costMessage = spendMessage !== null && message ? spendMessage / message : null;
 
             setKPI('kpi-cost-reach-funnel', formatMoney(costReach), `ad spend (${formatK(spendReach)}) ÷ reach (${formatK(reach)})`);
             setKPI('kpi-cost-engage-funnel', formatMoney(costEngage), `ad spend (${formatK(spendEngage)}) ÷ engage (${formatK(engage)})`);
-            setKPI('kpi-cost-message-funnel', formatMoney(costMessage), `ad spend (${formatK(spendMessage)}) ÷ message (${message})`);
+            setKPI('kpi-cost-message-funnel', formatMoney(costMessage), `ad spend (${formatK(spendMessage)}) ÷ message (${formatNum(message)})`);
 
             // 2. Chat Data
             const chatIn = getVal('chat-inbound', 396);
             const chatQual = getVal('chat-qualified', 119);
             const respTime = getVal('chat-response', 2.25);
             
-            document.getElementById('val-total-chat').textContent = chatIn.toLocaleString();
-            document.getElementById('val-qualified').textContent = chatQual.toLocaleString();
+            document.getElementById('val-total-chat').textContent = formatNum(chatIn);
+            document.getElementById('val-qualified').textContent = formatNum(chatQual);
             
-            const qualRate = (chatQual / chatIn) * 100;
-            const costContact = spend / chatQual;
+            const qualRate = chatQual !== null && chatIn ? (chatQual / chatIn) * 100 : null;
+            const costContact = spend !== null && chatQual ? spend / chatQual : null;
             
-            // Assume 74% Paid / 26% Org split for visuals if not provided
-            const chatPaid = Math.round(chatIn * 0.74);
-            const chatOrg = chatIn - chatPaid;
+            let chatPaid = null;
+            let chatOrg = null;
+            if (chatIn !== null) {
+                chatPaid = Math.round(chatIn * 0.74);
+                chatOrg = chatIn - chatPaid;
+            }
             
-            setKPI('kpi-total-chat', `${chatPaid} / ${chatOrg} <span style="font-size: 16px; font-weight: normal; color: var(--text-muted);">คน</span>`, `รวมทั้งหมด ${chatIn} คน`);
+            const chatTotalStr = chatPaid !== null ? `${chatPaid} / ${chatOrg} <span style="font-size: 16px; font-weight: normal; color: var(--text-muted);">คน</span>` : 'N/A';
+            setKPI('kpi-total-chat', chatTotalStr, `รวมทั้งหมด ${formatNum(chatIn)} คน`);
             
-            const mins = Math.floor(respTime);
-            const secs = Math.round((respTime - mins) * 60);
-            setKPI('kpi-response-time', `${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`, `เวลาที่แอดมินใช้ตอบลูกค้า`);
+            let respTimeStr = 'N/A';
+            if (respTime !== null && !isNaN(respTime)) {
+                const mins = Math.floor(respTime);
+                const secs = Math.round((respTime - mins) * 60);
+                respTimeStr = `${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
+            }
+            setKPI('kpi-response-time', respTimeStr, `เวลาที่แอดมินใช้ตอบลูกค้า`);
 
-            setKPI('kpi-qualified-rate', `${qualRate.toFixed(1)}%`, `contact (${chatQual}) ÷ total chat (${chatIn})`);
-            setKPI('kpi-cost-contact', formatMoney(costContact), `ad spend (${formatK(spend)}) ÷ contact (${chatQual})`);
+            setKPI('kpi-qualified-rate', formatPct(qualRate), `contact (${formatNum(chatQual)}) ÷ total chat (${formatNum(chatIn)})`);
+            setKPI('kpi-cost-contact', formatMoney(costContact), `ad spend (${formatK(spend)}) ÷ contact (${formatNum(chatQual)})`);
 
             // 3. CRM Data
             const lead = getVal('crm-lead', 28);
@@ -706,29 +729,29 @@
             const revenue = getVal('crm-revenue', 127687.50);
             const forecast = getVal('crm-forecast', 0);
 
-            document.getElementById('val-lead').textContent = lead.toLocaleString();
-            document.getElementById('val-quotation').textContent = quote.toLocaleString();
-            document.getElementById('val-closed').textContent = closed.toLocaleString();
+            document.getElementById('val-lead').textContent = formatNum(lead);
+            document.getElementById('val-quotation').textContent = formatNum(quote);
+            document.getElementById('val-closed').textContent = formatNum(closed);
             document.getElementById('val-total-revenue').textContent = formatMoney(revenue);
 
-            const leadPassRate = (lead / chatQual) * 100;
-            const costLead = spend / lead;
+            const leadPassRate = lead !== null && chatQual ? (lead / chatQual) * 100 : null;
+            const costLead = spend !== null && lead ? spend / lead : null;
             
-            setKPI('kpi-lead-pass-rate', `${leadPassRate.toFixed(1)}%`, `lead (${lead}) ÷ qualified (${chatQual})`);
-            setKPI('kpi-cost-lead', formatMoney(costLead), `ad spend (${formatK(spend)}) ÷ lead (${lead})`);
+            setKPI('kpi-lead-pass-rate', formatPct(leadPassRate), `lead (${formatNum(lead)}) ÷ qualified (${formatNum(chatQual)})`);
+            setKPI('kpi-cost-lead', formatMoney(costLead), `ad spend (${formatK(spend)}) ÷ lead (${formatNum(lead)})`);
 
-            const quoteRate = (quote / lead) * 100;
-            setKPI('kpi-quotation-rate', `${quoteRate.toFixed(1)}%`, `quotation (${quote}) ÷ lead (${lead})`);
+            const quoteRate = quote !== null && lead ? (quote / lead) * 100 : null;
+            setKPI('kpi-quotation-rate', formatPct(quoteRate), `quotation (${formatNum(quote)}) ÷ lead (${formatNum(lead)})`);
             setKPI('kpi-forecast-revenue', formatMoney(forecast), `ยอดที่คาดว่าจะปิดเพิ่มในเดือนหน้า`);
             
-            const closeRate = (closed / quote) * 100;
-            setKPI('kpi-close-rate', `${closeRate.toFixed(1)}%`, `closed won (${closed}) ÷ quotation (${quote})`);
+            const closeRate = closed !== null && quote ? (closed / quote) * 100 : null;
+            setKPI('kpi-close-rate', formatPct(closeRate), `closed won (${formatNum(closed)}) ÷ quotation (${formatNum(quote)})`);
             
-            const revPerSales = revenue / 4;
+            const revPerSales = revenue !== null ? revenue / 4 : null;
             setKPI('kpi-rev-per-sales', formatMoney(revPerSales), `total revenue (${formatK(revenue)}) ÷ sales reps (4)`);
 
-            const roi = ((revenue - spend) / spend) * 100;
-            const roiColor = roi >= 0 ? 'var(--success)' : 'var(--danger)';
+            const roi = revenue !== null && spend !== null && spend !== 0 ? ((revenue - spend) / spend) * 100 : null;
+            const roiColor = roi !== null && roi >= 0 ? 'var(--success)' : (roi !== null ? 'var(--danger)' : 'var(--text-muted)');
             
             const roiBox = document.getElementById('kpi-roi');
             if(roiBox) {
@@ -736,7 +759,7 @@
                 const rVal = roiBox.querySelector('div:nth-child(2)');
                 if(rVal) {
                     rVal.style.color = roiColor;
-                    rVal.textContent = roi.toFixed(1) + '%';
+                    rVal.textContent = formatPct(roi);
                 }
             }
         } catch (err) {

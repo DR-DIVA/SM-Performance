@@ -477,16 +477,6 @@
         const errorAlert = document.getElementById('error-alert');
         errorAlert.style.display = 'none';
 
-        // Validation Rule: Ad Spend and Revenue are REQUIRED
-        const spend = document.getElementById('fb-spend').value;
-        const revenue = document.getElementById('crm-revenue').value;
-
-        if(!spend || !revenue) {
-            errorAlert.textContent = '❌ Error: Ad Spend and Total Revenue are required fields!';
-            errorAlert.style.display = 'block';
-            return;
-        }
-
         // Gather all data
         const data = {};
         allInputs.forEach(input => {
