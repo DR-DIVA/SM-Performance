@@ -633,7 +633,7 @@
             }
         }
 
-        async function pollData() {
+        async function loadDashboardData() {
             try {
                 const res = await fetch('/api/data');
                 const memory = await res.json();
