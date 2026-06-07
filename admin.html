@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmediva Admin Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --l1-color: #38bdf8; /* FB */
+            --l2-color: #818cf8; /* Chat */
+            --l5-color: #f472b6; /* CRM */
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header-left h1 {
+            margin: 0 0 5px 0;
+            color: var(--text-main);
+        }
+
+        .header-left .timestamp {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-view {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .btn-view:hover { background: rgba(255,255,255,0.2); }
+
+        .btn-save {
+            background: var(--success);
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        }
+        .btn-save:hover { background: #16a34a; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-fb { border-top: 4px solid var(--l1-color); }
+        .card-chat { border-top: 4px solid var(--l2-color); }
+        .card-crm { border-top: 4px solid var(--l5-color); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .card-fb .card-title { color: var(--l1-color); }
+        .card-chat .card-title { color: var(--l2-color); }
+        .card-crm .card-title { color: var(--l5-color); }
+
+        .status-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 12px;
+            letter-spacing: 0.5px;
+        }
+        .status-waiting {
+            background: rgba(234, 179, 8, 0.2);
+            color: var(--warning);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+        .status-done {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .form-group label span.req { color: var(--danger); }
+
+        .form-group input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        .drop-zone {
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            background: rgba(0,0,0,0.2);
+        }
+        .drop-zone:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .alert-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            font-size: 14px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="header-left">
+            <h1>Cosmediva Data Entry</h1>
+            <div class="timestamp" id="last-updated">Last Updated: Never</div>
+        </div>
+        <div class="header-right">
+            <a href="dashboard.html" class="btn-view" target="_blank">View Dashboard</a>
+            <button class="btn-save" onclick="saveData()">Save & Update</button>
+        </div>
+    </div>
+
+    <div class="alert-box" id="error-alert"></div>
+
+    <div class="grid">
+        <!-- Facebook Ads Zone -->
+        <div class="card card-fb">
+            <div class="card-header">
+                <h2 class="card-title">1. Facebook Ads</h2>
+                <div style="text-align: right;">
+                    <div class="status-badge status-waiting" id="status-fb">WAITING</div>
+                    <div id="date-fb" style="font-size: 10px; color: var(--text-muted); margin-top: 4px; display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="drop-zone" style="padding: 10px;">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">📊 Drop FB CSV/Image here</div>
+                <img src="file:///C:/Users/hp/.gemini/antigravity/brain/9a9d2399-37bf-410b-8044-ebc39c2fa3ce/media__1780515738904.png" alt="FB Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">ภาพตัวอย่างที่เคยดึงข้อมูล</div>
+            </div>
+
+            <div class="form-group">
+                <label>Ad Spend (งบโฆษณา) <span class="req">*</span></label>
+                <input type="number" id="fb-spend" class="input-fb" value="45735.62">
+            </div>
+            <div class="form-group">
+                <label>Reach</label>
+                <input type="number" id="fb-reach" class="input-fb" value="640328">
+            </div>
+            <div class="form-group">
+                <label>Engagement</label>
+                <input type="number" id="fb-engage" class="input-fb" value="3900">
+            </div>
+            <div class="form-group">
+                <label>Message (Conversations)</label>
+                <input type="number" id="fb-message" class="input-fb" value="293">
+            </div>
+        </div>
+
+        <!-- OhoChat Zone -->
+        <div class="card card-chat">
+            <div class="card-header">
+                <h2 class="card-title">2. OhoChat</h2>
+                <div style="text-align: right;">
+                    <div class="status-badge status-waiting" id="status-chat">WAITING</div>
+                    <div id="date-chat" style="font-size: 10px; color: var(--text-muted); margin-top: 4px; display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="drop-zone" style="padding: 10px;">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">💬 Drop Chat Export here</div>
+                <img src="file:///C:/Users/hp/.gemini/antigravity/brain/9a9d2399-37bf-410b-8044-ebc39c2fa3ce/media__1780521246993.png" alt="Chat Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">ไฟล์: บริษัท คอสเมดิวา จำกัด_รายชื่อลูกค้า_ข้อมูลทั่วไป.xlsx</div>
+            </div>
+
+            <div class="form-group">
+                <label>Chat Inbound (รวม Paid/Org)</label>
+                <input type="number" id="chat-inbound" class="input-chat" value="396">
+            </div>
+            <div class="form-group">
+                <label>Qualified Contact</label>
+                <input type="number" id="chat-qualified" class="input-chat" value="119">
+            </div>
+            <div class="form-group">
+                <label>Admin Response Time (Mins)</label>
+                <input type="number" id="chat-response" class="input-chat" value="2.25">
+            </div>
+        </div>
+
+        <!-- JUBILI CRM Zone -->
+        <div class="card card-crm">
+            <div class="card-header">
+                <h2 class="card-title">3. JUBILI CRM</h2>
+                <div style="text-align: right;">
+                    <div class="status-badge status-waiting" id="status-crm">WAITING</div>
+                    <div id="date-crm" style="font-size: 10px; color: var(--text-muted); margin-top: 4px; display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="drop-zone" style="padding: 10px;">
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">🤝 Drop JUBILI R-02 & DASHBOARD here</div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <img src="file:///C:/Users/hp/.gemini/antigravity/brain/9a9d2399-37bf-410b-8044-ebc39c2fa3ce/media__1780521083632.png" alt="JUBILI PDF" style="max-width: 45%; max-height: 80px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
+                    <img src="file:///C:/Users/hp/.gemini/antigravity/brain/9a9d2399-37bf-410b-8044-ebc39c2fa3ce/media__1780521130466.png" alt="JUBILI Dashboard" style="max-width: 45%; max-height: 80px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">ไฟล์ตัวอย่าง: JUBILI_R-02__ยอดขายรายเดือน...th</div>
+            </div>
+
+            <div class="form-group">
+                <label>Lead (เบอร์/Line ID)</label>
+                <input type="number" id="crm-lead" class="input-crm" value="28">
+            </div>
+            <div class="form-group">
+                <label>Quotation Sent</label>
+                <input type="number" id="crm-quote" class="input-crm" value="5">
+            </div>
+            <div class="form-group">
+                <label>Closed Won</label>
+                <input type="number" id="crm-closed" class="input-crm" value="6">
+            </div>
+            <div class="form-group">
+                <label>Total Revenue (ยอดขาย ฿)</label>
+                <input type="number" id="crm-revenue" class="input-crm" value="127687.50">
+            </div>
+            <div class="form-group">
+                <label>Forecast Revenue (ยอดคาดการณ์ ฿)</label>
+                <input type="number" id="crm-forecast" class="input-crm" placeholder="e.g. 50000" value="0">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast-msg">✅ Data saved successfully!</div>
+
+<script>
+    // Elements
+    const inputsFb = document.querySelectorAll('.input-fb');
+    const inputsChat = document.querySelectorAll('.input-chat');
+    const inputsCrm = document.querySelectorAll('.input-crm');
+    const allInputs = document.querySelectorAll('input[type="number"]');
+    const timestampEl = document.getElementById('last-updated');
+
+    // Load existing data
+    async function loadData() {
+        try {
+            const res = await fetch('http://localhost:3000/api/data');
+            const memory = await res.json();
+            if(memory) {
+                const inputs = document.querySelectorAll('input');
+                inputs.forEach(input => {
+                    if(memory[input.id] !== undefined) {
+                        input.value = memory[input.id];
+                    }
+                });
+                if(memory['last_updated']) {
+                    timestampEl.textContent = 'Last Updated: ' + memory['last_updated'];
+                }
+                checkStatuses();
+            }
+        } catch (err) {
+            console.error("Failed to load data from backend");
+        }
+    }
+
+    // Check if a section is fully filled
+    function updateSectionStatus(inputs, statusId, dateId) {
+        let isDone = true;
+        inputs.forEach(input => {
+            if(input.value.trim() === '') isDone = false;
+        });
+
+        const badge = document.getElementById(statusId);
+        const dateEl = document.getElementById(dateId);
+        // Note: Logic for date tracking would need integration with fetch data or a persistent store
+        
+        if(isDone) {
+            badge.textContent = 'DONE';
+            badge.className = 'status-badge status-done';
+            dateEl.style.display = 'block';
+        } else {
+            badge.textContent = 'WAITING';
+            badge.className = 'status-badge status-waiting';
+            dateEl.style.display = 'none';
+        }
+    }
+
+    function checkStatuses() {
+        updateSectionStatus(inputsFb, 'status-fb', 'date-fb');
+        updateSectionStatus(inputsChat, 'status-chat', 'date-chat');
+        updateSectionStatus(inputsCrm, 'status-crm', 'date-crm');
+    }
+
+    // Listen for typing to update badges live
+    allInputs.forEach(input => {
+        input.addEventListener('input', checkStatuses);
+    });
+
+    // Save Data
+    async function saveData() {
+        const errorAlert = document.getElementById('error-alert');
+        errorAlert.style.display = 'none';
+
+        // Validation Rule: Ad Spend and Revenue are REQUIRED
+        const spend = document.getElementById('fb-spend').value;
+        const revenue = document.getElementById('crm-revenue').value;
+
+        if(!spend || !revenue) {
+            errorAlert.textContent = '❌ Error: Ad Spend and Total Revenue are required fields!';
+            errorAlert.style.display = 'block';
+            return;
+        }
+
+        // Gather all data
+        const data = {};
+        allInputs.forEach(input => {
+            data[input.id] = input.value !== '' ? parseFloat(input.value) : null;
+        });
+
+        // Add timestamp
+        const now = new Date();
+        const timeString = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB');
+        data['last_updated'] = timeString;
+
+        const btn = document.querySelector('.btn-save');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '🔄 Saving...';
+
+        try {
+            await fetch('http://localhost:3000/api/data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            btn.innerHTML = '✅ Saved Successfully!';
+            btn.style.background = '#10b981';
+            
+            checkStatuses();
+
+            // Show Toast
+            const toast = document.getElementById('toast-msg');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = 'var(--success)';
+            }, 2000);
+        } catch (err) {
+            console.error(err);
+            btn.innerHTML = '❌ Error Saving';
+            btn.style.background = '#ef4444';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = 'var(--success)';
+            }, 2000);
+        }
+    }
+
+    // Init
+    loadData();
+</script>
+
+</body>
+</html>

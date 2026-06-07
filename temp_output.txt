@@ -1,0 +1,30 @@
+--- COLUMNS ---
+['platform_user_name', 'platform_user_id', 'platform', 'platform_name', 'sale_owner', 'oho_display_name', 'name', 'phone', 'email', 'country', 'postcode', 'province', 'province_id', 'district', 'district_id', 'sub_district', 'sub_district_id', 'street', 'gender', 'age', 'birth_date', 'tags', 'referrals', 'suggestion_tags', 'is_spam', 'created_at', 'last_contact_date']
+
+--- FIRST 5 ROWS ---
+  platform_user_name                   platform_user_id platform       platform_name  sale_owner    oho_display_name   name phone email  country  postcode province  province_id district  district_id sub_district  sub_district_id street gender  age  birth_date                           tags referrals                suggestion_tags  is_spam                created_at         last_contact_date
+0               Gaf♡  U23af51f550c40160e25b143e376951f2     line  CosmeDiva Official         NaN  CosmeDiva Official   Gaf♡   NaN   NaN      NaN       NaN      NaN          NaN      NaN          NaN          NaN              NaN    NaN    NaN  NaN         NaN     ไม่เกี่ยวข้อง, เพิ่มเพื่อน       NaN  greeting_no_chat, new_contact    False  2026-05-28T23:09:08.098Z  2026-05-28T23:09:06.612Z
+1              K I A  U857f611aaecece13d108c06638a9cec3     line  CosmeDiva Official         NaN  CosmeDiva Official  K I A   NaN   NaN      NaN       NaN      NaN          NaN      NaN          NaN          NaN              NaN    NaN    NaN  NaN         NaN        ไม่เกี่ยวข้อง, Supplier       NaN                    new_contact    False  2026-05-28T14:08:11.374Z  2026-05-28T15:14:26.141Z
+2               Trin  Ub666dc2ad2072f0b68e77aa1272df8b5     line  CosmeDiva Official         NaN  CosmeDiva Official   Trin   NaN   NaN      NaN       NaN      NaN          NaN      NaN          NaN          NaN              NaN    NaN    NaN  NaN         NaN                          บล็อก       NaN             block, new_contact    False  2026-05-28T14:37:27.565Z  2026-05-28T14:38:05.594Z
+3              Dada.  Ud9f5e120eb8ef376daa5df8c013dbefb     line  CosmeDiva Official         NaN  CosmeDiva Official  Dada.   NaN   NaN      NaN       NaN      NaN          NaN      NaN          NaN          NaN              NaN    NaN    NaN  NaN         NaN   ไม่ทราบสาเหตุ, เงียบ, โต้ตอบ       NaN                    new_contact    False  2026-05-28T11:47:18.904Z  2026-05-28T12:08:51.445Z
+4              Momay  Ua442f8d86e7020506b6be3d6a4e3c061     line  CosmeDiva Official         NaN  CosmeDiva Official  Momay   NaN   NaN      NaN       NaN      NaN          NaN      NaN          NaN          NaN              NaN    NaN    NaN  NaN         NaN  เพราะขั้นต่ำ, จบสนทนา, โต้ตอบ       NaN                            NaN    False  2026-05-20T20:01:09.098Z  2026-05-27T15:45:43.887Z
+
+--- UNIQUE TAGS ---
+tags
+ไม่ตอบกลับ/มือลั่น/แชทผี, มือลั่น/แชทผี           19
+ทักแชทเดียวแล้วเงียบ, ไม่ตอบกลับ/มือลั่น/แชทผี    13
+ไม่ทราบสาเหตุ, เงียบ, โต้ตอบ                      10
+ไม่เกี่ยวข้อง, เพิ่มเพื่อน                         4
+โต้ตอบ, LEAD, ได้ contact                          4
+ไม่เกี่ยวข้อง, Supplier                            2
+บล็อก                                              2
+จบสนทนา, โต้ตอบ, ขอบคุณ                            2
+โต้ตอบ, ไม่รับผลิต                                 2
+เพราะขั้นต่ำ, จบสนทนา, โต้ตอบ                      1
+จบสนทนา, โต้ตอบ, ไม่รับผลิต                        1
+เพราะเรทราคา, เงียบ, สนใจสร้างแบรนด์, นอกเวลา      1
+โต้ตอบ, LEAD, ครีมกันแดด, ได้ contact              1
+ไม่เกี่ยวข้อง, สมัครงาน                            1
+TESTER                                             1
+ครีมกันแดด, นอกเวลา                                1
+เพราะเรทราคา, เงียบ, โต้ตอบ                        1
