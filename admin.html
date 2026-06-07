@@ -751,6 +751,16 @@
             processOhoChatFile(e.dataTransfer.files[0]);
         }
     });
+    // Global Image Zooming for ALL Dropzones
+    document.querySelectorAll('.drop-zone img').forEach(img => {
+        img.style.cursor = 'zoom-in';
+        img.removeAttribute('onclick'); // Clean up any inline onclicks
+        img.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering any parent file inputs
+            document.getElementById('modal-img').src = this.src;
+            document.getElementById('image-modal').style.display = 'flex';
+        });
+    });
 </script>
 
 <!-- Image Modal for Zooming -->
