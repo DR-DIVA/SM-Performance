@@ -246,7 +246,9 @@
             
             <div class="drop-zone" id="fb-drop" style="padding: 10px;">
                 <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">📊 Drop FB Image / CSV here</div>
-                <img id="fb-preview-img" src="assets/fb-sample.png" alt="FB Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2); object-fit: contain; cursor: zoom-in;" onclick="document.getElementById('modal-img').src=this.src; document.getElementById('image-modal').style.display='flex';">
+                <div id="fb-gallery" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 10px;">
+                    <img id="fb-preview-img" src="assets/fb-sample.png" alt="FB Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2); object-fit: contain; cursor: zoom-in;">
+                </div>
                 <div style="font-size: 11px; color: var(--l2-color); margin-top: 5px; cursor: pointer; text-decoration: underline;" onclick="document.getElementById('fb-file').click()">คลิกอัปโหลด หรือ กด Ctrl+V เพื่อวางรูป</div>
                 <input type="file" id="fb-file" accept="image/*, .csv, .xlsx, .xls" style="display: none;">
             </div>
@@ -405,10 +407,31 @@
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                fbPreviewImg.src = e.target.result;
-                fbPreviewImg.style.maxHeight = '150px';
-                fbPreviewImg.style.display = 'inline-block';
-                fbPreviewImg.style.opacity = '1';
+                // Remove sample image if it exists
+                const sampleImg = document.getElementById('fb-preview-img');
+                if (sampleImg) {
+                    sampleImg.remove();
+                }
+
+                // Create and append new image
+                const newImg = document.createElement('img');
+                newImg.src = e.target.result;
+                newImg.style.maxHeight = '150px';
+                newImg.style.borderRadius = '4px';
+                newImg.style.border = '1px solid rgba(255,255,255,0.2)';
+                newImg.style.cursor = 'zoom-in';
+                newImg.style.objectFit = 'contain';
+                
+                newImg.addEventListener('click', function(evt) {
+                    evt.stopPropagation();
+                    document.getElementById('modal-img').src = this.src;
+                    document.getElementById('image-modal').style.display = 'flex';
+                });
+
+                const gallery = document.getElementById('fb-gallery');
+                if(gallery) {
+                    gallery.appendChild(newImg);
+                }
                 
                 document.getElementById('status-fb').className = 'status-badge status-done';
                 document.getElementById('status-fb').innerText = 'DONE';
