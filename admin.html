@@ -489,13 +489,30 @@
                 rows.forEach(row => {
                     inboundCount++; // Count every row as an inbound chat
 
-                    // Check tags for "LEAD" or "ได้ contact" to count as qualified
+                    // Check tags for exclusion to count as qualified
                     const tags = row['tags'] ? row['tags'].toLowerCase() : '';
-                    if (tags.includes('lead') || tags.includes('ได้ contact') || tags.includes('โต้ตอบ')) {
-                        // You can adjust this logic based on exact tags needed
-                        if(tags.includes('lead') || tags.includes('ได้ contact')) {
-                            qualifiedCount++;
+                    
+                    const unqualifiedKeywords = [
+                        'ไม่ตอบกลับ/มือลั่น/แชทผี',
+                        'มือลั่น/แชทผี',
+                        'ทักแชทเดียวแล้วเงียบ',
+                        'ไม่เกี่ยวข้อง',
+                        'supplier',
+                        'บล็อก',
+                        'เพิ่มเพื่อน'
+                    ];
+
+                    let isUnqualified = false;
+                    for (const kw of unqualifiedKeywords) {
+                        if (tags.includes(kw.toLowerCase())) {
+                            isUnqualified = true;
+                            break;
                         }
+                    }
+
+                    // If it doesn't contain any bad tags, it's a qualified contact
+                    if (!isUnqualified) {
+                        qualifiedCount++;
                     }
                 });
 
