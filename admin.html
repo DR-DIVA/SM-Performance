@@ -214,6 +214,8 @@
     </style>
     <!-- PapaParse for CSV reading -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS for Excel reading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -277,10 +279,10 @@
             </div>
             
             <div class="drop-zone" id="ohochat-drop" style="padding: 10px;" onclick="document.getElementById('ohochat-file').click()">
-                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">💬 Drop OhoChat CSV here (or Click)</div>
+                <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">💬 Drop OhoChat CSV/Excel here</div>
                 <img src="assets/chat-sample.png" alt="Chat Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">รองรับไฟล์: .csv (รายชื่อลูกค้า)</div>
-                <input type="file" id="ohochat-file" accept=".csv" style="display: none;">
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">รองรับไฟล์: .csv หรือ excel (รายชื่อลูกค้า)</div>
+                <input type="file" id="ohochat-file" accept=".csv, .xlsx, .xls" style="display: none;">
             </div>
 
             <div class="form-group">
@@ -470,77 +472,120 @@
     // Init
     loadData();
 
-    // --- OhoChat CSV Parsing Logic ---
+    // --- OhoChat CSV/Excel Parsing Logic ---
     const ohoDropZone = document.getElementById('ohochat-drop');
     const ohoFileInput = document.getElementById('ohochat-file');
 
-    function processOhoChatCSV(file) {
+    function resetDropZone() {
+        ohoDropZone.style.background = 'rgba(0,0,0,0.2)';
+        ohoDropZone.innerHTML = `
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px;">💬 Drop OhoChat CSV/Excel here</div>
+            <img src="assets/chat-sample.png" alt="Chat Sample" style="max-width: 100%; max-height: 100px; border-radius: 4px; opacity: 0.8; border: 1px solid rgba(255,255,255,0.2);">
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">รองรับไฟล์: .csv หรือ excel (รายชื่อลูกค้า)</div>
+            <input type="file" id="ohochat-file" accept=".csv, .xlsx, .xls" style="display: none;">
+        `;
+    }
+
+    function processRows(rows) {
+        let inboundCount = 0;
+        let qualifiedCount = 0;
+
+        const unqualifiedKeywords = [
+            'ไม่ตอบกลับ/มือลั่น/แชทผี',
+            'มือลั่น/แชทผี',
+            'ทักแชทเดียวแล้วเงียบ',
+            'ไม่เกี่ยวข้อง',
+            'supplier',
+            'บล็อก',
+            'เพิ่มเพื่อน'
+        ];
+
+        rows.forEach(row => {
+            // Count every row that has at least some data (skip totally empty trailing lines)
+            if(Object.keys(row).length === 0) return;
+            
+            inboundCount++;
+
+            const tags = row['tags'] ? String(row['tags']).toLowerCase() : '';
+            
+            let isUnqualified = false;
+            for (const kw of unqualifiedKeywords) {
+                if (tags.includes(kw.toLowerCase())) {
+                    isUnqualified = true;
+                    break;
+                }
+            }
+
+            if (!isUnqualified) {
+                qualifiedCount++;
+            }
+        });
+
+        // Update UI inputs
+        document.getElementById('chat-inbound').value = inboundCount;
+        document.getElementById('chat-qualified').value = qualifiedCount;
+        
+        checkStatuses(); // Refresh badges
+
+        // Reset drop zone UI
+        ohoDropZone.style.background = 'rgba(0,0,0,0.2)';
+        ohoDropZone.innerHTML = `
+            <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--success);">✅ ดึงข้อมูลสำเร็จ!</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Inbound: ${inboundCount} | Qualified: ${qualifiedCount}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; cursor: pointer;" onclick="document.getElementById('ohochat-file').click()">คลิกเพื่อเปลี่ยนไฟล์อัปโหลด</div>
+        `;
+    }
+
+    function processOhoChatFile(file) {
         ohoDropZone.style.background = 'rgba(34, 197, 94, 0.2)'; // green highlight
         ohoDropZone.innerHTML = '<div style="padding: 20px;">⏳ กำลังคำนวณข้อมูล...</div>';
 
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                const rows = results.data;
-                let inboundCount = 0;
-                let qualifiedCount = 0;
+        const fileName = file.name.toLowerCase();
 
-                rows.forEach(row => {
-                    inboundCount++; // Count every row as an inbound chat
-
-                    // Check tags for exclusion to count as qualified
-                    const tags = row['tags'] ? row['tags'].toLowerCase() : '';
-                    
-                    const unqualifiedKeywords = [
-                        'ไม่ตอบกลับ/มือลั่น/แชทผี',
-                        'มือลั่น/แชทผี',
-                        'ทักแชทเดียวแล้วเงียบ',
-                        'ไม่เกี่ยวข้อง',
-                        'supplier',
-                        'บล็อก',
-                        'เพิ่มเพื่อน'
-                    ];
-
-                    let isUnqualified = false;
-                    for (const kw of unqualifiedKeywords) {
-                        if (tags.includes(kw.toLowerCase())) {
-                            isUnqualified = true;
-                            break;
-                        }
-                    }
-
-                    // If it doesn't contain any bad tags, it's a qualified contact
-                    if (!isUnqualified) {
-                        qualifiedCount++;
-                    }
-                });
-
-                // Update UI inputs
-                document.getElementById('chat-inbound').value = inboundCount;
-                document.getElementById('chat-qualified').value = qualifiedCount;
-                
-                checkStatuses(); // Refresh badges
-
-                // Reset drop zone UI
-                ohoDropZone.style.background = 'rgba(0,0,0,0.2)';
-                ohoDropZone.innerHTML = `
-                    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: var(--success);">✅ ดึงข้อมูลสำเร็จ!</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Inbound: ${inboundCount} | Qualified: ${qualifiedCount}</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px; cursor: pointer;" onclick="document.getElementById('ohochat-file').click()">คลิกเพื่อเปลี่ยนไฟล์อัปโหลด</div>
-                `;
-            },
-            error: function(err) {
-                alert('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV');
-                console.error(err);
-            }
-        });
+        if (fileName.endsWith('.csv')) {
+            // Parse CSV with PapaParse
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    processRows(results.data);
+                },
+                error: function(err) {
+                    alert('เกิดข้อผิดพลาดในการอ่านไฟล์ CSV');
+                    console.error(err);
+                    resetDropZone();
+                }
+            });
+        } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+            // Parse Excel with SheetJS
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, {defval: ""});
+                    processRows(jsonRows);
+                } catch(err) {
+                    alert('เกิดข้อผิดพลาดในการอ่านไฟล์ Excel');
+                    console.error(err);
+                    resetDropZone();
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            alert("กรุณาอัปโหลดไฟล์ .csv หรือ .xlsx (.xls) เท่านั้นครับ");
+            resetDropZone();
+        }
     }
 
     // Handle File Select (Click)
-    ohoFileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            processOhoChatCSV(e.target.files[0]);
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'ohochat-file') {
+            if (e.target.files.length > 0) {
+                processOhoChatFile(e.target.files[0]);
+            }
         }
     });
 
@@ -557,7 +602,7 @@
         e.preventDefault();
         ohoDropZone.style.borderColor = 'rgba(255,255,255,0.2)';
         if (e.dataTransfer.files.length > 0) {
-            processOhoChatCSV(e.dataTransfer.files[0]);
+            processOhoChatFile(e.dataTransfer.files[0]);
         }
     });
 </script>
