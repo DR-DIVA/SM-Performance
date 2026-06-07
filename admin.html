@@ -490,14 +490,11 @@
         let inboundCount = 0;
         let qualifiedCount = 0;
 
-        const unqualifiedKeywords = [
-            'ไม่ตอบกลับ/มือลั่น/แชทผี',
-            'มือลั่น/แชทผี',
-            'ทักแชทเดียวแล้วเงียบ',
-            'ไม่เกี่ยวข้อง',
-            'supplier',
-            'บล็อก',
-            'เพิ่มเพื่อน'
+        const positiveKeywords = [
+            'lead',
+            'ได้ contact',
+            'tester',
+            'โต้ตอบ'
         ];
 
         rows.forEach(row => {
@@ -508,15 +505,15 @@
 
             const tags = row['tags'] ? String(row['tags']).toLowerCase() : '';
             
-            let isUnqualified = false;
-            for (const kw of unqualifiedKeywords) {
+            let isQualified = false;
+            for (const kw of positiveKeywords) {
                 if (tags.includes(kw.toLowerCase())) {
-                    isUnqualified = true;
+                    isQualified = true;
                     break;
                 }
             }
 
-            if (!isUnqualified) {
+            if (isQualified) {
                 qualifiedCount++;
             }
         });
